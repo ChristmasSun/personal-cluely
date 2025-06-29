@@ -44,6 +44,7 @@ declare global {
       analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
       analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
       analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
+      getDesktopSources: () => Promise<Array<{ id: string; name: string; display_id: string }>>
 
       // Chat functionality
       askQuestionAboutScreenshot: (question: string) => Promise<{ text: string; timestamp: number }>

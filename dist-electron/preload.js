@@ -113,6 +113,7 @@ electron_1.contextBridge.exposeInMainWorld("electronAPI", {
     analyzeAudioConversational: (data, mimeType) => electron_1.ipcRenderer.invoke("analyze-audio-conversational", data, mimeType),
     analyzeAudioFile: (path) => electron_1.ipcRenderer.invoke("analyze-audio-file", path),
     analyzeImageFile: (path) => electron_1.ipcRenderer.invoke("analyze-image-file", path),
+    getDesktopSources: () => electron_1.ipcRenderer.invoke("get-desktop-sources"),
     // Chat functionality
     askQuestionAboutScreenshot: (question) => electron_1.ipcRenderer.invoke("ask-question-about-screenshot", question),
     getConversationHistory: () => electron_1.ipcRenderer.invoke("get-conversation-history"),

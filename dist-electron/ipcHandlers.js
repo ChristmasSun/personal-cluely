@@ -168,5 +168,26 @@ function initializeIpcHandlers(appState) {
     electron_1.ipcMain.handle("quit-app", () => {
         electron_1.app.quit();
     });
+    // IPC handler for getting desktop sources for system audio
+    electron_1.ipcMain.handle("get-desktop-sources", async () => {
+        try {
+            console.log("[IPC] Getting desktop sources for system audio...");
+            const sources = await electron_1.desktopCapturer.getSources({
+                types: ['screen', 'window'],
+                fetchWindowIcons: false
+            });
+            const audioSources = sources.map(source => ({
+                id: source.id,
+                name: source.name,
+                display_id: source.display_id
+            }));
+            console.log("[IPC] Found desktop sources:", audioSources.length);
+            return audioSources;
+        }
+        catch (error) {
+            console.error("[IPC] Error getting desktop sources:", error);
+            throw error;
+        }
+    });
 }
 //# sourceMappingURL=ipcHandlers.js.map

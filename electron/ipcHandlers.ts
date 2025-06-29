@@ -1,7 +1,11 @@
 // ipcHandlers.ts
 
-import { ipcMain, app } from "electron"
+import { ipcMain, app, desktopCapturer } from "electron"
 import { AppState } from "./main"
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 export function initializeIpcHandlers(appState: AppState): void {
   ipcMain.handle(
@@ -177,5 +181,76 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   ipcMain.handle("quit-app", () => {
     app.quit()
+  })
+
+  // IPC handler for getting desktop sources for system audio
+  ipcMain.handle("get-desktop-sources", async () => {
+    try {
+      console.log("[IPC] Getting desktop sources for system audio...")
+      const sources = await desktopCapturer.getSources({
+        types: ['screen', 'window'],
+        fetchWindowIcons: false
+      })
+      
+      const audioSources = sources.map(source => ({
+        id: source.id,
+        name: source.name,
+        display_id: source.display_id
+      }))
+      
+      console.log("[IPC] Found desktop sources:", audioSources.length)
+      return audioSources
+    } catch (error: any) {
+      console.error("[IPC] Error getting desktop sources:", error)
+      throw error
+    }
+  })
+
+  // Audio device switching handlers
+  ipcMain.handle('switch-audio-mode', async (event, mode: 'meeting' | 'normal') => {
+    try {
+      console.log(`🎧 [IPC] Switching audio to ${mode} mode...`)
+      
+      const { stdout, stderr } = await execAsync(`./scripts/toggle-audio.sh ${mode}`)
+      
+      if (stderr) {
+        console.warn(`🎧 [IPC] Audio switch warning: ${stderr}`)
+      }
+      
+      console.log(`✅ [IPC] Audio switched to ${mode} mode successfully`)
+      console.log(stdout)
+      
+      return { success: true, output: stdout }
+    } catch (error) {
+      console.error(`❌ [IPC] Failed to switch audio to ${mode} mode:`, error)
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  })
+
+  // Auto-toggle audio mode (detects current state and switches)
+  ipcMain.handle('toggle-audio-mode', async (event) => {
+    try {
+      console.log('🎧 [IPC] Auto-toggling audio mode...')
+      
+      const { stdout, stderr } = await execAsync('./scripts/toggle-audio.sh')
+      
+      if (stderr) {
+        console.warn(`🎧 [IPC] Audio toggle warning: ${stderr}`)
+      }
+      
+      console.log('✅ [IPC] Audio mode toggled successfully')
+      console.log(stdout)
+      
+      return { success: true, output: stdout }
+    } catch (error) {
+      console.error('❌ [IPC] Failed to toggle audio mode:', error)
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
   })
 }

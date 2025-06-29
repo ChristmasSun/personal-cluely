@@ -138,10 +138,25 @@ exports.AppState = AppState;
 // Application initialization
 async function initializeApp() {
     const appState = AppState.getInstance();
+    // Enable desktop capture features
+    electron_1.app.commandLine.appendSwitch('enable-media-stream');
+    electron_1.app.commandLine.appendSwitch('enable-usermedia-screen-capturing');
+    electron_1.app.commandLine.appendSwitch('allow-http-screen-capture');
     // Initialize IPC handlers before window creation
     (0, ipcHandlers_1.initializeIpcHandlers)(appState);
     electron_1.app.whenReady().then(() => {
         console.log("App is ready");
+        // Set session permissions for media access
+        const { session } = require('electron');
+        session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+            const allowedPermissions = ['media', 'microphone', 'camera', 'desktop-capturer'];
+            if (allowedPermissions.includes(permission)) {
+                callback(true); // Grant permission
+            }
+            else {
+                callback(false); // Deny permission
+            }
+        });
         appState.createWindow();
         // Register global shortcuts using ShortcutsHelper
         appState.shortcutsHelper.registerGlobalShortcuts();

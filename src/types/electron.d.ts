@@ -26,8 +26,18 @@ export interface ElectronAPI {
   moveWindowLeft: () => Promise<void>
   moveWindowRight: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+  analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
   analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
+  analyzeImageFile: (path: string) => Promise<void>
+  getDesktopSources: () => Promise<any>
+  clearListenConversation: () => Promise<{ success: boolean }>
+  onToggleListenMode: (callback: () => void) => () => void
+  debugLog: (message: string) => Promise<{ success: boolean }>
   quitApp: () => Promise<void>
+  
+  // Audio device switching
+  switchAudioMode: (mode: 'meeting' | 'normal') => Promise<{ success: boolean; output?: string; error?: string }>
+  toggleAudioMode: () => Promise<{ success: boolean; output?: string; error?: string }>
 }
 
 declare global {

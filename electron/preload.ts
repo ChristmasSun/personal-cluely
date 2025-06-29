@@ -46,6 +46,10 @@ interface ElectronAPI {
   onToggleListenMode: (callback: () => void) => () => void
 
   debugLog: (message: string) => Promise<{ success: boolean }>
+  
+  // Audio device switching
+  switchAudioMode: (mode: 'meeting' | 'normal') => Promise<{ success: boolean; output?: string; error?: string }>
+  toggleAudioMode: () => Promise<{ success: boolean; output?: string; error?: string }>
 }
 
 export const PROCESSING_EVENTS = {
@@ -181,6 +185,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   analyzeAudioConversational: (data: string, mimeType: string) => ipcRenderer.invoke("analyze-audio-conversational", data, mimeType),
   analyzeAudioFile: (path: string) => ipcRenderer.invoke("analyze-audio-file", path),
   analyzeImageFile: (path: string) => ipcRenderer.invoke("analyze-image-file", path),
+  getDesktopSources: () => ipcRenderer.invoke("get-desktop-sources"),
   
   // Chat functionality
   askQuestionAboutScreenshot: (question: string) => ipcRenderer.invoke("ask-question-about-screenshot", question),
@@ -201,5 +206,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => ipcRenderer.removeListener("toggle-listen-mode", listener)
   },
 
-  debugLog: (message: string) => ipcRenderer.invoke("debug-log", message)
+  debugLog: (message: string) => ipcRenderer.invoke("debug-log", message),
+  
+  // Audio device switching
+  switchAudioMode: (mode: 'meeting' | 'normal') => ipcRenderer.invoke("switch-audio-mode", mode),
+  toggleAudioMode: () => ipcRenderer.invoke("toggle-audio-mode")
 } as ElectronAPI)

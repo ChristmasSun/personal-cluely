@@ -190,11 +190,28 @@ export class AppState {
 async function initializeApp() {
   const appState = AppState.getInstance()
 
+  // Enable desktop capture features
+  app.commandLine.appendSwitch('enable-media-stream')
+  app.commandLine.appendSwitch('enable-usermedia-screen-capturing')
+  app.commandLine.appendSwitch('allow-http-screen-capture')
+
   // Initialize IPC handlers before window creation
   initializeIpcHandlers(appState)
 
   app.whenReady().then(() => {
     console.log("App is ready")
+    
+    // Set session permissions for media access
+    const { session } = require('electron')
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+      const allowedPermissions = ['media', 'microphone', 'camera', 'desktop-capturer']
+      if (allowedPermissions.includes(permission)) {
+        callback(true) // Grant permission
+      } else {
+        callback(false) // Deny permission
+      }
+    })
+    
     appState.createWindow()
     // Register global shortcuts using ShortcutsHelper
     appState.shortcutsHelper.registerGlobalShortcuts()

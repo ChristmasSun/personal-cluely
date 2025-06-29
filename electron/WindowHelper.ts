@@ -87,7 +87,9 @@ export class WindowHelper {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
-        preload: path.join(__dirname, "preload.js")
+        preload: path.join(__dirname, "preload.js"),
+        enableBlinkFeatures: 'getDisplayMedia',
+        webSecurity: false
       },
       show: true,
       alwaysOnTop: true,
