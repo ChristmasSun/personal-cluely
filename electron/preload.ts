@@ -26,12 +26,26 @@ interface ElectronAPI {
   onUnauthorized: (callback: () => void) => () => void
   onDebugError: (callback: (error: string) => void) => () => void
   takeScreenshot: () => Promise<void>
+  takeScreenshotAndAnalyze: () => Promise<void>
   moveWindowLeft: () => Promise<void>
   moveWindowRight: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+  analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
   analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
   analyzeImageFile: (path: string) => Promise<void>
+  
+  // Chat functionality
+  askQuestionAboutScreenshot: (question: string) => Promise<{ text: string; timestamp: number }>
+  getConversationHistory: () => Promise<Array<{role: 'user' | 'assistant', content: string}>>
+  clearConversation: () => Promise<{ success: boolean }>
+  clearListenConversation: () => Promise<{ success: boolean }>
+  onScreenshotReadyForChat: (callback: (data: { screenshotPath: string; message: string }) => void) => () => void
+  
   quitApp: () => Promise<void>
+
+  onToggleListenMode: (callback: () => void) => () => void
+
+  debugLog: (message: string) => Promise<{ success: boolean }>
 }
 
 export const PROCESSING_EVENTS = {
@@ -56,6 +70,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateContentDimensions: (dimensions: { width: number; height: number }) =>
     ipcRenderer.invoke("update-content-dimensions", dimensions),
   takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
+  takeScreenshotAndAnalyze: () => ipcRenderer.invoke("take-screenshot-and-analyze"),
   getScreenshots: () => ipcRenderer.invoke("get-screenshots"),
   deleteScreenshot: (path: string) =>
     ipcRenderer.invoke("delete-screenshot", path),
@@ -163,7 +178,28 @@ contextBridge.exposeInMainWorld("electronAPI", {
   moveWindowLeft: () => ipcRenderer.invoke("move-window-left"),
   moveWindowRight: () => ipcRenderer.invoke("move-window-right"),
   analyzeAudioFromBase64: (data: string, mimeType: string) => ipcRenderer.invoke("analyze-audio-base64", data, mimeType),
+  analyzeAudioConversational: (data: string, mimeType: string) => ipcRenderer.invoke("analyze-audio-conversational", data, mimeType),
   analyzeAudioFile: (path: string) => ipcRenderer.invoke("analyze-audio-file", path),
   analyzeImageFile: (path: string) => ipcRenderer.invoke("analyze-image-file", path),
-  quitApp: () => ipcRenderer.invoke("quit-app")
+  
+  // Chat functionality
+  askQuestionAboutScreenshot: (question: string) => ipcRenderer.invoke("ask-question-about-screenshot", question),
+  getConversationHistory: () => ipcRenderer.invoke("get-conversation-history"),
+  clearConversation: () => ipcRenderer.invoke("clear-conversation"),
+  clearListenConversation: () => ipcRenderer.invoke("clear-listen-conversation"),
+  onScreenshotReadyForChat: (callback: (data: { screenshotPath: string; message: string }) => void) => {
+    const listener = (_event: any, data: { screenshotPath: string; message: string }) => callback(data)
+    ipcRenderer.on("screenshot-ready-for-chat", listener)
+    return () => ipcRenderer.removeListener("screenshot-ready-for-chat", listener)
+  },
+  
+  quitApp: () => ipcRenderer.invoke("quit-app"),
+
+  onToggleListenMode: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on("toggle-listen-mode", listener)
+    return () => ipcRenderer.removeListener("toggle-listen-mode", listener)
+  },
+
+  debugLog: (message: string) => ipcRenderer.invoke("debug-log", message)
 } as ElectronAPI)

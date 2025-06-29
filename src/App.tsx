@@ -24,6 +24,7 @@ declare global {
       onProcessingNoScreenshots: (callback: () => void) => () => void
       onResetView: (callback: () => void) => () => void
       takeScreenshot: () => Promise<void>
+      takeScreenshotAndAnalyze: () => Promise<void>
 
       //INITIAL SOLUTION EVENTS
       deleteScreenshot: (
@@ -41,7 +42,21 @@ declare global {
 
       // Audio Processing
       analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+      analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
       analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
+
+      // Chat functionality
+      askQuestionAboutScreenshot: (question: string) => Promise<{ text: string; timestamp: number }>
+      getConversationHistory: () => Promise<Array<{role: 'user' | 'assistant', content: string}>>
+      clearConversation: () => Promise<{ success: boolean }>
+      clearListenConversation: () => Promise<{ success: boolean }>
+      onScreenshotReadyForChat: (callback: (data: { screenshotPath: string; message: string }) => void) => () => void
+
+      // Listen mode functionality
+      onToggleListenMode: (callback: () => void) => () => void
+
+      // Debug logging
+      debugLog: (message: string) => Promise<{ success: boolean }>
 
       moveWindowLeft: () => Promise<void>
       moveWindowRight: () => Promise<void>

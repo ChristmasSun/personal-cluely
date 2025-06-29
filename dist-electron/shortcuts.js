@@ -8,25 +8,38 @@ class ShortcutsHelper {
         this.appState = appState;
     }
     registerGlobalShortcuts() {
-        electron_1.globalShortcut.register("CommandOrControl+H", async () => {
+        // Removed Cmd+H screenshot shortcut - now everything is handled by Cmd+Enter
+        electron_1.globalShortcut.register("CommandOrControl+Enter", async () => {
             const mainWindow = this.appState.getMainWindow();
             if (mainWindow) {
-                console.log("Taking screenshot...");
+                console.log("Taking screenshot and solving...");
                 try {
+                    // Reset to queue view before taking screenshot to ensure proper queue management
+                    this.appState.setView("queue");
+                    // First take a screenshot
                     const screenshotPath = await this.appState.takeScreenshot();
+                    console.log("Screenshot taken at:", screenshotPath);
                     const preview = await this.appState.getImagePreview(screenshotPath);
+                    // Notify renderer about the screenshot
                     mainWindow.webContents.send("screenshot-taken", {
                         path: screenshotPath,
                         preview
                     });
+                    // Then immediately process it with the specific screenshot path
+                    await this.appState.processingHelper.processScreenshots(screenshotPath);
                 }
                 catch (error) {
-                    console.error("Error capturing screenshot:", error);
+                    console.error("Error in solve workflow:", error);
                 }
             }
         });
-        electron_1.globalShortcut.register("CommandOrControl+Enter", async () => {
-            await this.appState.processingHelper.processScreenshots();
+        // New shortcut for Listen functionality
+        electron_1.globalShortcut.register("CommandOrControl+L", () => {
+            const mainWindow = this.appState.getMainWindow();
+            if (mainWindow) {
+                console.log("Toggling listen mode...");
+                mainWindow.webContents.send("toggle-listen-mode");
+            }
         });
         electron_1.globalShortcut.register("CommandOrControl+R", () => {
             console.log("Command + R pressed. Canceling requests and resetting queues...");

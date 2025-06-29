@@ -18,6 +18,11 @@ export interface ElectronAPI {
   onUnauthorized: (callback: () => void) => () => void
   onDebugError: (callback: (error: string) => void) => () => void
   takeScreenshot: () => Promise<void>
+  takeScreenshotAndAnalyze: () => Promise<void>
+  onScreenshotReadyForChat: (callback: (data: { screenshotPath: string; message: string }) => void) => () => void
+  askQuestionAboutScreenshot: (question: string) => Promise<{ text: string; timestamp: number }>
+  getConversationHistory: () => Promise<Array<{role: 'user' | 'assistant', content: string}>>
+  clearConversation: () => Promise<{ success: boolean }>
   moveWindowLeft: () => Promise<void>
   moveWindowRight: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>

@@ -106,7 +106,18 @@ class LLMHelper {
                     mimeType: "audio/mp3"
                 }
             };
-            const prompt = `${this.systemPrompt}\n\nDescribe this audio clip in a short, concise answer. In addition to your main answer, suggest several possible actions or responses the user could take next based on the audio. Do not return a structured JSON object, just answer naturally as you would to a user.`;
+            const prompt = `You are a helpful AI assistant having a real-time conversation. Listen to what the user is saying and respond naturally as if you're talking with them. 
+
+Rules:
+- Respond directly to what they said, like a friend would
+- If they ask a question, answer it helpfully
+- If they make a statement, acknowledge it and add something useful
+- If they seem confused or stuck, offer specific help
+- Keep responses conversational and under 2-3 sentences
+- Be encouraging and supportive
+- If they're in a meeting/call, you can comment on what you hear
+
+Respond as if you're their AI companion who's listening and wants to help.`;
             const result = await this.model.generateContent([prompt, audioPart]);
             const response = await result.response;
             const text = response.text();
@@ -118,6 +129,57 @@ class LLMHelper {
         }
     }
     async analyzeAudioFromBase64(data, mimeType) {
+        console.log("[LLMHelper] analyzeAudioFromBase64 called with data length:", data.length, "mimeType:", mimeType);
+        const maxRetries = 3;
+        let retryCount = 0;
+        while (retryCount <= maxRetries) {
+            try {
+                const audioPart = {
+                    inlineData: {
+                        data,
+                        mimeType
+                    }
+                };
+                const prompt = `You are a helpful AI assistant having a real-time conversation. Listen to what the user is saying and respond naturally as if you're talking with them. 
+
+Rules:
+- Respond directly to what they said, like a friend would
+- If they ask a question, answer it helpfully
+- If they make a statement, acknowledge it and add something useful
+- If they seem confused or stuck, offer specific help
+- Keep responses conversational and under 2-3 sentences
+- Be encouraging and supportive
+- If they're in a meeting/call, you can comment on what you hear
+
+Respond as if you're their AI companion who's listening and wants to help.`;
+                console.log(`[LLMHelper] Calling Gemini API (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+                const result = await this.model.generateContent([prompt, audioPart]);
+                const response = await result.response;
+                const text = response.text();
+                console.log("[LLMHelper] Gemini API SUCCESS:", text.substring(0, 50) + "...");
+                return { text, timestamp: Date.now() };
+            }
+            catch (error) {
+                retryCount++;
+                console.error(`[LLMHelper] Error analyzing audio (attempt ${retryCount}/${maxRetries + 1}):`, error);
+                console.error("[LLMHelper] Error details:", error.message, error.status, error.statusText);
+                // If it's a rate limit error and we have retries left, wait and retry
+                if (retryCount <= maxRetries && (error.message?.includes('rate') ||
+                    error.message?.includes('quota') ||
+                    error.message?.includes('throttl') ||
+                    error.status === 429)) {
+                    const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s
+                    console.log(`[LLMHelper] Rate limit detected, waiting ${waitTime}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+                // If not a rate limit error or no retries left, throw
+                throw error;
+            }
+        }
+    }
+    async analyzeAudioFromBase64WithHistory(data, mimeType, conversationHistory = []) {
+        console.log("[LLMHelper] analyzeAudioFromBase64WithHistory called with data length:", data.length, "history length:", conversationHistory.length);
         try {
             const audioPart = {
                 inlineData: {
@@ -125,15 +187,49 @@ class LLMHelper {
                     mimeType
                 }
             };
-            const prompt = `${this.systemPrompt}\n\nDescribe this audio clip in a short, concise answer. In addition to your main answer, suggest several possible actions or responses the user could take next based on the audio. Do not return a structured JSON object, just answer naturally as you would to a user and be concise.`;
+            // Build conversation context
+            let conversationContext = "";
+            if (conversationHistory.length > 0) {
+                // Take only the last 4 messages and sanitize them
+                const recentMessages = conversationHistory.slice(-4).map(msg => ({
+                    role: msg.role,
+                    content: msg.content.replace(/[^\w\s.,!?-]/g, '').substring(0, 100) // Sanitize and limit length
+                }));
+                conversationContext = "\n\nRecent conversation:\n" +
+                    recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n') + "\n\n";
+                console.log("[LLMHelper] Using conversation context with", recentMessages.length, "recent messages");
+            }
+            const prompt = `You are a helpful AI assistant having a real-time conversation. Listen to what the user is saying and respond naturally as if you're talking with them. ${conversationContext}
+
+Rules:
+- Respond directly to what they said, like a friend would
+- If they ask a question, answer it helpfully
+- If they make a statement, acknowledge it and add something useful
+- If they seem confused or stuck, offer specific help
+- Keep responses conversational and under 2-3 sentences
+- Be encouraging and supportive
+- If they're in a meeting/call, you can comment on what you hear
+- Reference previous parts of the conversation when relevant
+
+Current audio: Listen to what the user just said and respond naturally.`;
+            console.log("[LLMHelper] Calling Gemini API...");
             const result = await this.model.generateContent([prompt, audioPart]);
             const response = await result.response;
             const text = response.text();
+            console.log("[LLMHelper] Gemini API returned:", text.substring(0, 100) + "...");
             return { text, timestamp: Date.now() };
         }
         catch (error) {
-            console.error("Error analyzing audio from base64:", error);
-            throw error;
+            console.error("[LLMHelper] Error analyzing audio from base64 with history:", error);
+            console.log("[LLMHelper] Falling back to non-conversational analysis...");
+            // Fallback to regular audio analysis without conversation history
+            try {
+                return await this.analyzeAudioFromBase64(data, mimeType);
+            }
+            catch (fallbackError) {
+                console.error("[LLMHelper] Fallback also failed:", fallbackError);
+                throw fallbackError;
+            }
         }
     }
     async analyzeImageFile(imagePath) {
@@ -154,6 +250,89 @@ class LLMHelper {
         catch (error) {
             console.error("Error analyzing image file:", error);
             throw error;
+        }
+    }
+    async askQuestionAboutImage(imagePath, question, conversationHistory = []) {
+        try {
+            const imageData = await fs_1.default.promises.readFile(imagePath);
+            const imagePart = {
+                inlineData: {
+                    data: imageData.toString("base64"),
+                    mimeType: "image/png"
+                }
+            };
+            // Build conversation context
+            let conversationContext = "";
+            if (conversationHistory.length > 0) {
+                conversationContext = "\n\nPrevious conversation:\n" +
+                    conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n') + "\n\n";
+            }
+            const prompt = `${this.systemPrompt}\n\nYou are looking at this image and answering questions about it. ${conversationContext}User question: ${question}\n\nAnswer the question based on what you can see in the image. Be helpful, concise, and natural. If the question relates to something not visible in the image, say so politely.`;
+            const result = await this.model.generateContent([prompt, imagePart]);
+            const response = await result.response;
+            const text = response.text();
+            return { text, timestamp: Date.now() };
+        }
+        catch (error) {
+            console.error("Error asking question about image:", error);
+            throw error;
+        }
+    }
+    async respondToTextWithHistory(transcribedText, conversationHistory = []) {
+        console.log("[LLMHelper] respondToTextWithHistory called with text:", transcribedText.substring(0, 100) + "...", "history length:", conversationHistory.length);
+        const maxRetries = 3;
+        let retryCount = 0;
+        while (retryCount <= maxRetries) {
+            try {
+                // Build conversation context
+                let conversationContext = "";
+                if (conversationHistory.length > 0) {
+                    // Take only the last 6 messages and sanitize them
+                    const recentMessages = conversationHistory.slice(-6).map(msg => ({
+                        role: msg.role,
+                        content: msg.content.replace(/[^\w\s.,!?-]/g, '').substring(0, 150) // Sanitize and limit length
+                    }));
+                    conversationContext = "\n\nRecent conversation:\n" +
+                        recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n') + "\n\n";
+                    console.log("[LLMHelper] Using conversation context with", recentMessages.length, "recent messages");
+                }
+                const prompt = `You are a helpful AI assistant having a real-time conversation. The user just said: "${transcribedText}" ${conversationContext}
+
+Rules:
+- Respond directly to what they said, like a friend would
+- If they ask a question, answer it helpfully
+- If they make a statement, acknowledge it and add something useful
+- If they seem confused or stuck, offer specific help
+- Keep responses conversational and under 2-3 sentences
+- Be encouraging and supportive
+- If they're in a meeting/call, you can comment on what you hear
+- Reference previous parts of the conversation when relevant
+
+Current message: Respond naturally to what the user just said: "${transcribedText}"`;
+                console.log(`[LLMHelper] Calling Gemini API for text response (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+                const result = await this.model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+                console.log("[LLMHelper] Gemini text response SUCCESS:", text.substring(0, 50) + "...");
+                return { text, timestamp: Date.now() };
+            }
+            catch (error) {
+                retryCount++;
+                console.error(`[LLMHelper] Error responding to text (attempt ${retryCount}/${maxRetries + 1}):`, error);
+                console.error("[LLMHelper] Error details:", error.message, error.status, error.statusText);
+                // If it's a rate limit error and we have retries left, wait and retry
+                if (retryCount <= maxRetries && (error.message?.includes('rate') ||
+                    error.message?.includes('quota') ||
+                    error.message?.includes('throttl') ||
+                    error.status === 429)) {
+                    const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s
+                    console.log(`[LLMHelper] Rate limit detected, waiting ${waitTime}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+                // If not a rate limit error or no retries left, throw
+                throw error;
+            }
         }
     }
 }

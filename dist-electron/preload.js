@@ -20,6 +20,7 @@ exports.PROCESSING_EVENTS = {
 electron_1.contextBridge.exposeInMainWorld("electronAPI", {
     updateContentDimensions: (dimensions) => electron_1.ipcRenderer.invoke("update-content-dimensions", dimensions),
     takeScreenshot: () => electron_1.ipcRenderer.invoke("take-screenshot"),
+    takeScreenshotAndAnalyze: () => electron_1.ipcRenderer.invoke("take-screenshot-and-analyze"),
     getScreenshots: () => electron_1.ipcRenderer.invoke("get-screenshots"),
     deleteScreenshot: (path) => electron_1.ipcRenderer.invoke("delete-screenshot", path),
     // Event listeners
@@ -109,8 +110,25 @@ electron_1.contextBridge.exposeInMainWorld("electronAPI", {
     moveWindowLeft: () => electron_1.ipcRenderer.invoke("move-window-left"),
     moveWindowRight: () => electron_1.ipcRenderer.invoke("move-window-right"),
     analyzeAudioFromBase64: (data, mimeType) => electron_1.ipcRenderer.invoke("analyze-audio-base64", data, mimeType),
+    analyzeAudioConversational: (data, mimeType) => electron_1.ipcRenderer.invoke("analyze-audio-conversational", data, mimeType),
     analyzeAudioFile: (path) => electron_1.ipcRenderer.invoke("analyze-audio-file", path),
     analyzeImageFile: (path) => electron_1.ipcRenderer.invoke("analyze-image-file", path),
-    quitApp: () => electron_1.ipcRenderer.invoke("quit-app")
+    // Chat functionality
+    askQuestionAboutScreenshot: (question) => electron_1.ipcRenderer.invoke("ask-question-about-screenshot", question),
+    getConversationHistory: () => electron_1.ipcRenderer.invoke("get-conversation-history"),
+    clearConversation: () => electron_1.ipcRenderer.invoke("clear-conversation"),
+    clearListenConversation: () => electron_1.ipcRenderer.invoke("clear-listen-conversation"),
+    onScreenshotReadyForChat: (callback) => {
+        const listener = (_event, data) => callback(data);
+        electron_1.ipcRenderer.on("screenshot-ready-for-chat", listener);
+        return () => electron_1.ipcRenderer.removeListener("screenshot-ready-for-chat", listener);
+    },
+    quitApp: () => electron_1.ipcRenderer.invoke("quit-app"),
+    onToggleListenMode: (callback) => {
+        const listener = () => callback();
+        electron_1.ipcRenderer.on("toggle-listen-mode", listener);
+        return () => electron_1.ipcRenderer.removeListener("toggle-listen-mode", listener);
+    },
+    debugLog: (message) => electron_1.ipcRenderer.invoke("debug-log", message)
 });
 //# sourceMappingURL=preload.js.map

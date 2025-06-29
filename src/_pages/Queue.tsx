@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useQuery } from "react-query"
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 import {
   Toast,
   ToastTitle,
@@ -26,7 +25,8 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   const [tooltipHeight, setTooltipHeight] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const { data: screenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
+  // Keep this for compatibility with existing functionality but we won't display the screenshots
+  const { data: screenshots = [] } = useQuery<Array<{ path: string; preview: string }>, Error>(
     ["screenshots"],
     async () => {
       try {
@@ -34,7 +34,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         return existing
       } catch (error) {
         console.error("Error loading screenshots:", error)
-        showToast("Error", "Failed to load existing screenshots", "error")
         return []
       }
     },
@@ -53,25 +52,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   ) => {
     setToastMessage({ title, description, variant })
     setToastOpen(true)
-  }
-
-  const handleDeleteScreenshot = async (index: number) => {
-    const screenshotToDelete = screenshots[index]
-
-    try {
-      const response = await window.electronAPI.deleteScreenshot(
-        screenshotToDelete.path
-      )
-
-      if (response.success) {
-        refetch()
-      } else {
-        console.error("Failed to delete screenshot:", response.error)
-        showToast("Error", "Failed to delete the screenshot file", "error")
-      }
-    } catch (error) {
-      console.error("Error deleting screenshot:", error)
-    }
   }
 
   useEffect(() => {
@@ -96,12 +76,10 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     updateDimensions()
 
     const cleanupFunctions = [
-      window.electronAPI.onScreenshotTaken(() => refetch()),
-      window.electronAPI.onResetView(() => refetch()),
       window.electronAPI.onSolutionError((error: string) => {
         showToast(
           "Processing Failed",
-          "There was an error processing your screenshots.",
+          "There was an error processing your screenshot.",
           "error"
         )
         setView("queue")
@@ -110,7 +88,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
       window.electronAPI.onProcessingNoScreenshots(() => {
         showToast(
           "No Screenshots",
-          "There are no screenshots to process.",
+          "Unable to capture screenshot.",
           "neutral"
         )
       })
@@ -128,7 +106,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   }
 
   return (
-    <div ref={contentRef} className={`bg-transparent w-1/2`}>
+    <div ref={contentRef} className="bg-transparent">
       <div className="px-4 py-3">
         <Toast
           open={toastOpen}
@@ -140,17 +118,10 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
           <ToastDescription>{toastMessage.description}</ToastDescription>
         </Toast>
 
-        <div className="space-y-3 w-fit">
-          <ScreenshotQueue
-            isLoading={false}
-            screenshots={screenshots}
-            onDeleteScreenshot={handleDeleteScreenshot}
-          />
-          <QueueCommands
-            screenshots={screenshots}
-            onTooltipVisibilityChange={handleTooltipVisibilityChange}
-          />
-        </div>
+        <QueueCommands
+          screenshots={screenshots}
+          onTooltipVisibilityChange={handleTooltipVisibilityChange}
+        />
       </div>
     </div>
   )

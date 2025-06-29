@@ -1,5 +1,4 @@
 "use strict";
-// electron/WindowHelper.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -62,13 +61,16 @@ class WindowHelper {
         this.screenWidth = workArea.width;
         this.screenHeight = workArea.height;
         this.step = Math.floor(this.screenWidth / 10); // 10 steps
-        this.currentX = 0; // Start at the left
+        // Center the window horizontally at the top
+        const initialWidth = 400; // Approximate initial width
+        this.currentX = Math.floor((workArea.width - initialWidth) / 2); // Center horizontally
+        this.currentY = 20; // Small margin from top
         const windowSettings = {
             height: 600,
             minWidth: undefined,
             maxWidth: undefined,
             x: this.currentX,
-            y: 0,
+            y: this.currentY,
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: true,

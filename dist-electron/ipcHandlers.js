@@ -23,6 +23,18 @@ function initializeIpcHandlers(appState) {
             throw error;
         }
     });
+    electron_1.ipcMain.handle("take-screenshot-and-analyze", async () => {
+        try {
+            const screenshotPath = await appState.takeScreenshot();
+            // Process the screenshot for AI analysis and switch to Solutions view
+            await appState.processingHelper.processScreenshots(screenshotPath);
+            return { success: true };
+        }
+        catch (error) {
+            console.error("Error taking screenshot and analyzing:", error);
+            throw error;
+        }
+    });
     electron_1.ipcMain.handle("get-screenshots", async () => {
         console.log({ view: appState.getView() });
         try {
@@ -72,6 +84,17 @@ function initializeIpcHandlers(appState) {
             throw error;
         }
     });
+    // IPC handler for conversational audio processing
+    electron_1.ipcMain.handle("analyze-audio-conversational", async (event, data, mimeType) => {
+        try {
+            const result = await appState.processingHelper.processConversationalAudio(data, mimeType);
+            return result;
+        }
+        catch (error) {
+            console.error("Error in analyze-audio-conversational handler:", error);
+            throw error;
+        }
+    });
     // IPC handler for analyzing audio from file path
     electron_1.ipcMain.handle("analyze-audio-file", async (event, path) => {
         try {
@@ -93,6 +116,54 @@ function initializeIpcHandlers(appState) {
             console.error("Error in analyze-image-file handler:", error);
             throw error;
         }
+    });
+    // IPC handler for asking questions about the current screenshot
+    electron_1.ipcMain.handle("ask-question-about-screenshot", async (event, question) => {
+        try {
+            const result = await appState.processingHelper.askQuestionAboutCurrentScreenshot(question);
+            return result;
+        }
+        catch (error) {
+            console.error("Error in ask-question-about-screenshot handler:", error);
+            throw error;
+        }
+    });
+    // IPC handler for getting conversation history
+    electron_1.ipcMain.handle("get-conversation-history", async () => {
+        try {
+            return appState.processingHelper.getConversationHistory();
+        }
+        catch (error) {
+            console.error("Error in get-conversation-history handler:", error);
+            throw error;
+        }
+    });
+    // IPC handler for clearing conversation
+    electron_1.ipcMain.handle("clear-conversation", async () => {
+        try {
+            appState.processingHelper.clearConversation();
+            return { success: true };
+        }
+        catch (error) {
+            console.error("Error in clear-conversation handler:", error);
+            throw error;
+        }
+    });
+    // IPC handler for clearing listen conversation
+    electron_1.ipcMain.handle("clear-listen-conversation", async () => {
+        try {
+            appState.processingHelper.clearListenConversation();
+            return { success: true };
+        }
+        catch (error) {
+            console.error("Error in clear-listen-conversation handler:", error);
+            throw error;
+        }
+    });
+    // IPC handler for debug logging to terminal
+    electron_1.ipcMain.handle("debug-log", async (event, message) => {
+        console.log(`[FRONTEND DEBUG] ${message}`);
+        return { success: true };
     });
     electron_1.ipcMain.handle("quit-app", () => {
         electron_1.app.quit();
