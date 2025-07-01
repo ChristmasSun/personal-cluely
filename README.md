@@ -3,7 +3,7 @@
 ## Features
 
 - **Ask Mode**: Analyze what's on your screen and get intelligent responses
-- **Listen Mode**: Advanced meeting assistant with system audio capture
+- **Listen Mode**: Advanced meeting assistant with system audio capture (unfortunately this lowkey slow rn maybe cuz api keys used in .env r free gemini and free deepmind idk)
 - **Queue System**: Manage and review AI interactions
 - **Real-time Processing**: Instant AI responses to screen content and audio
 
