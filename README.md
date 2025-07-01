@@ -3,7 +3,7 @@
 ## Features
 
 - **Ask Mode**: Analyze what's on your screen and get intelligent responses
-- **Listen Mode**: Advanced meeting assistant with system audio capture (unfortunately this lowkey slow rn maybe cuz api keys used in .env r free gemini and free deepmind idk)
+- **Listen Mode**: Advanced meeting assistant with system audio capture (unfortunately this lowkey slow rn maybe cuz api keys used in .env r free gemini and free deepgram idk)
 - **Queue System**: Manage and review AI interactions
 - **Real-time Processing**: Instant AI responses to screen content and audio
 
@@ -28,8 +28,13 @@ clone repo, npm install
    - Go to **System Preferences > Sound > Output**
    - Select your "Meeting Output" device
    - This routes system audio through both your speakers AND BlackHole
+  
+make .env file 
+put in free gemini dev key and deepgram key (they give u $200 free credit) 
+unless u have better paid api keys in which case put in those and then rename all references to above keys in proj 
+i just didnt want to spend money tbh 
 
-run dev.sh file and profit
+run dev.sh file and profit (runs an apple script that auto changes ur audio devices for blackhole but might error depending on ur names so check scripts/ folder if so
 
 ## Development
 
