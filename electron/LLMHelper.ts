@@ -1,9 +1,23 @@
+/*
+ * Originally created by Prathit (https://github.com/Prat011)
+
+ * - Enhanced system prompts with detailed guidelines for assistant
+ * - Added audio analysis capabilities (analyzeAudioFile, analyzeAudioFromBase64)
+ * - Added conversation history support for contextual responses
+ * - Added image analysis with question-asking functionality
+ * - Enhanced meeting assistant features and real-time processing
+ * - Restructured prompts for better problem-solving responses
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
+
 import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai"
 import fs from "fs"
 
 export class LLMHelper {
   private model: GenerativeModel
-  private readonly systemPrompt = `<core_identity> You are an assistant called Cluely, developed and created by Cluely, whose sole purpose is to analyze and solve problems asked by the user or shown on the screen. Your responses must be specific, accurate, and actionable. </core_identity>
+  // below prompt copied from random twitter post i found claiming to have reverse engineered their system prompt so lowk yoink 
+  private readonly systemPrompt = `<core_identity> You are an assistant called personal cluely, whose sole purpose is to analyze and solve problems asked by the user or shown on the screen. Your responses must be specific, accurate, and actionable. </core_identity>
 
 <general_guidelines>
 
@@ -364,8 +378,8 @@ Current meeting audio: Listen to what is being said and respond helpfully. Keep 
     }
   }
 
-  public async respondToTextWithHistory(transcribedText: string, conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = []) {
-    console.log("[LLMHelper] respondToTextWithHistory called with text:", transcribedText.substring(0, 100) + "...", "history length:", conversationHistory.length)
+  public async respondToTextWithHistory(transcribedText: string, conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [], mode: 'meeting' | 'conversation' = 'meeting') {
+    console.log("[LLMHelper] respondToTextWithHistory called with text:", transcribedText.substring(0, 100) + "...", "history length:", conversationHistory.length, "mode:", mode)
     
     const maxRetries = 3
     let retryCount = 0
@@ -386,7 +400,7 @@ Current meeting audio: Listen to what is being said and respond helpfully. Keep 
           console.log("[LLMHelper] Using conversation context with", recentMessages.length, "recent messages")
         }
         
-        const prompt = `You are a meeting assistant. Your goal is to help the user advance the conversation and perform effectively in any meeting.
+        const meetingPrompt = `You are a meeting assistant. Your goal is to help the user advance the conversation and perform effectively in any meeting.
 
 When needed, you answer questions directed at the user, whether spoken or visible on the screen, using all available context.
 
@@ -397,34 +411,44 @@ ${conversationContext}
 Current meeting audio: "${transcribedText}"
 
 Respond helpfully based on what was just said in the meeting. Keep responses brief and actionable.`;
+
+        const conversationPrompt = `You are a friendly conversation companion designed to help introverts and people who struggle with social interactions. Your goal is to help the user navigate conversations with friends and keep them engaging.
+
+You provide:
+- Quick, natural response suggestions that feel authentic
+- Conversation starters and follow-up questions to keep dialogue flowing  
+- Social cues and context interpretation
+- Gentle encouragement to help build confidence
+- Ways to redirect conversations when they feel stuck
+
+Be warm, supportive, and understanding. Focus on helping the user feel more comfortable and confident in social situations.
+
+${conversationContext}
+
+What was just said: "${transcribedText}"
+
+Provide helpful, encouraging suggestions for how to respond or continue this conversation. Keep it natural and conversational.`;
         
-        console.log(`[LLMHelper] Calling Gemini API for text response (attempt ${retryCount + 1}/${maxRetries + 1})...`)
+        const prompt = mode === 'meeting' ? meetingPrompt : conversationPrompt;
+        
+        console.log(`[LLMHelper] Calling Gemini API for text response (attempt ${retryCount + 1}/${maxRetries + 1}) in ${mode} mode...`)
         const result = await this.model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
-        console.log("[LLMHelper] Gemini text response SUCCESS:", text.substring(0, 50) + "...")
+        console.log("[LLMHelper] Gemini API SUCCESS:", text.substring(0, 50) + "...")
         return { text, timestamp: Date.now() };
       } catch (error: any) {
+        console.error(`[LLMHelper] Retry ${retryCount + 1} failed:`, error?.message || error);
         retryCount++
-        console.error(`[LLMHelper] Error responding to text (attempt ${retryCount}/${maxRetries + 1}):`, error);
-        console.error("[LLMHelper] Error details:", error.message, error.status, error.statusText)
         
-        // If it's a rate limit error and we have retries left, wait and retry
-        if (retryCount <= maxRetries && (
-          error.message?.includes('rate') || 
-          error.message?.includes('quota') || 
-          error.message?.includes('throttl') ||
-          error.status === 429
-        )) {
-          const waitTime = Math.pow(2, retryCount) * 1000 // Exponential backoff: 2s, 4s, 8s
-          console.log(`[LLMHelper] Rate limit detected, waiting ${waitTime}ms before retry...`)
-          await new Promise(resolve => setTimeout(resolve, waitTime))
-          continue
+        if (retryCount <= maxRetries) {
+          const delay = Math.pow(2, retryCount) * 1000 // Exponential backoff: 2s, 4s, 8s
+          console.log(`[LLMHelper] Waiting ${delay}ms before retry ${retryCount + 1}...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
-        
-        // If not a rate limit error or no retries left, throw
-        throw error
       }
     }
+    
+    throw new Error(`[LLMHelper] Failed to get text response after ${maxRetries + 1} attempts`)
   }
 } 

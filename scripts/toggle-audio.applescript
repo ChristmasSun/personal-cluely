@@ -1,4 +1,3 @@
--- Toggle Audio Devices for Free Cluely Meeting Mode
 -- This script switches between normal and meeting audio setups
 
 on run argv
@@ -43,11 +42,11 @@ on switchToMeetingMode()
         log "✅ Switched to Meeting Mode successfully"
         
         -- Display notification
-        display notification "Meeting audio active! System + Mic capture enabled." with title "Free Cluely" sound name "Glass"
+        display notification "Meeting audio active! System + Mic capture enabled." with title "personal Cluely" sound name "Glass"
         
     on error errorMessage
         log "❌ Error switching to meeting mode: " & errorMessage
-        display notification "Failed to switch to meeting mode: " & errorMessage with title "Free Cluely" sound name "Basso"
+        display notification "Failed to switch to meeting mode: " & errorMessage with title "personal Cluely" sound name "Basso"
         error errorMessage
     end try
 end switchToMeetingMode
@@ -64,11 +63,11 @@ on switchToNormalMode()
         log "✅ Switched to Normal Mode successfully"
         
         -- Display notification
-        display notification "Normal audio restored. Back to built-in devices." with title "Free Cluely" sound name "Glass"
+        display notification "Normal audio restored. Back to built-in devices." with title "personal Cluely" sound name "Glass"
         
     on error errorMessage
         log "❌ Error switching to normal mode: " & errorMessage
-        display notification "Failed to switch to normal mode: " & errorMessage with title "Free Cluely" sound name "Basso"
+        display notification "Failed to switch to normal mode: " & errorMessage with title "personal Cluely" sound name "Basso"
         error errorMessage
     end try
 end switchToNormalMode

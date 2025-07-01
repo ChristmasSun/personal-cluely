@@ -1,3 +1,11 @@
+/*
+ * 
+ * This is an entirely new file that provides audio transcription capabilities
+ * using the Deepgram API for the meeting assistant features.
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
+
 import { createClient } from '@deepgram/sdk'
 
 export class DeepgramHelper {

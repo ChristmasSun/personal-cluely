@@ -1,4 +1,16 @@
-// ProcessingHelper.ts
+/*
+ * Originally created by Prathit (https://github.com/Prat011)
+
+ * - Added DeepgramHelper integration for audio transcription
+ * - Added conversation history management for both chat and listen modes
+ * - Added audio file processing capabilities (MP3/WAV support)
+ * - Added interactive screenshot chat functionality  
+ * - Enhanced audio processing with base64 support
+ * - Added conversational audio processing for meeting assistant
+ * - Restructured processing flow for better user experience
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
 
 import { AppState } from "./main"
 import { LLMHelper } from "./LLMHelper"
@@ -191,8 +203,8 @@ export class ProcessingHelper {
   }
 
   // New method for conversational audio processing using Deepgram + Gemini
-  public async processConversationalAudio(data: string, mimeType: string) {
-    console.log("[ProcessingHelper] processConversationalAudio called with data length:", data.length, "mimeType:", mimeType)
+  public async processConversationalAudio(data: string, mimeType: string, mode: 'meeting' | 'conversation' = 'meeting') {
+    console.log("[ProcessingHelper] processConversationalAudio called with data length:", data.length, "mimeType:", mimeType, "mode:", mode)
     try {
       // Step 1: Transcribe audio using Deepgram
       console.log("[ProcessingHelper] Step 1: Transcribing audio with Deepgram...")
@@ -206,8 +218,8 @@ export class ProcessingHelper {
       console.log("[ProcessingHelper] Transcription:", transcribedText)
       
       // Step 2: Generate conversational response using Gemini
-      console.log("[ProcessingHelper] Step 2: Generating response with Gemini, conversation history length:", this.listenConversationHistory.length)
-      const result = await this.llmHelper.respondToTextWithHistory(transcribedText, this.listenConversationHistory);
+      console.log("[ProcessingHelper] Step 2: Generating response with Gemini, conversation history length:", this.listenConversationHistory.length, "mode:", mode)
+      const result = await this.llmHelper.respondToTextWithHistory(transcribedText, this.listenConversationHistory, mode);
       
       console.log("[ProcessingHelper] Gemini returned result:", result.text.substring(0, 50) + "...")
       

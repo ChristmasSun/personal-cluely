@@ -1,3 +1,17 @@
+/*
+ * Originally created by Prathit (https://github.com/Prat011)
+
+ * - Added extensive audio processing APIs to electronAPI interface
+ * - Added conversational audio processing capabilities
+ * - Added screenshot chat functionality with conversation history
+ * - Added listen mode functionality for meeting assistant
+ * - Added desktop source capture for system audio
+ * - Enhanced window management and debugging capabilities
+ * - Improved state management and query invalidation
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
+
 import { ToastProvider } from "./components/ui/toast"
 import Queue from "./_pages/Queue"
 import { ToastViewport } from "@radix-ui/react-toast"

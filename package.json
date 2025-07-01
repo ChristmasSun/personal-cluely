@@ -1,5 +1,5 @@
 {
-  "name": "interview-coder",
+  "name": "personal-cluely",
   "version": "1.0.0",
   "main": "./dist-electron/main.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "watch": "tsc -p electron/tsconfig.json --watch"
   },
   "build": {
-    "appId": "com.electron.interview-coder",
-    "productName": "Interview Coder",
+    "appId": "com.electron.personal-cluely",
+    "productName": "personal cluely",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
@@ -28,28 +28,25 @@
       "target": [
         "dmg",
         "zip"
-      ],
-      "icon": "assets/icons/mac/icon.icns"
+      ]
     },
     "win": {
       "target": [
         "nsis",
         "portable"
-      ],
-      "icon": "assets/icons/win/icon.ico"
+      ]
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
-      ],
-      "icon": "assets/icons/png/icon-256x256.png"
+      ]
     },
     "publish": [
       {
         "provider": "github",
         "owner": "ibttf",
-        "repo": "interview-coder-frontend"
+        "repo": "personal-cluely"
       }
     ]
   },

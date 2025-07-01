@@ -30,7 +30,7 @@ interface ElectronAPI {
   moveWindowLeft: () => Promise<void>
   moveWindowRight: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
-  analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+  analyzeAudioConversational: (data: string, mimeType: string, mode?: 'meeting' | 'conversation') => Promise<{ text: string; timestamp: number }>
   analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
   analyzeImageFile: (path: string) => Promise<void>
   
@@ -182,7 +182,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   moveWindowLeft: () => ipcRenderer.invoke("move-window-left"),
   moveWindowRight: () => ipcRenderer.invoke("move-window-right"),
   analyzeAudioFromBase64: (data: string, mimeType: string) => ipcRenderer.invoke("analyze-audio-base64", data, mimeType),
-  analyzeAudioConversational: (data: string, mimeType: string) => ipcRenderer.invoke("analyze-audio-conversational", data, mimeType),
+  analyzeAudioConversational: (data: string, mimeType: string, mode?: 'meeting' | 'conversation') => ipcRenderer.invoke("analyze-audio-conversational", data, mimeType, mode),
   analyzeAudioFile: (path: string) => ipcRenderer.invoke("analyze-audio-file", path),
   analyzeImageFile: (path: string) => ipcRenderer.invoke("analyze-image-file", path),
   getDesktopSources: () => ipcRenderer.invoke("get-desktop-sources"),

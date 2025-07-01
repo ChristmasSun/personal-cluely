@@ -1,6 +1,4 @@
-# Free Cluely - AI Meeting Assistant
-
-An AI-powered screen analysis and meeting assistant tool built with Electron, React, and modern web technologies.
+# personal cluely
 
 ## Features
 
@@ -9,20 +7,15 @@ An AI-powered screen analysis and meeting assistant tool built with Electron, Re
 - **Queue System**: Manage and review AI interactions
 - **Real-time Processing**: Instant AI responses to screen content and audio
 
-## Meeting Assistant Setup (Mac)
+## how to use
 
-For the best meeting experience, you'll want to capture both your microphone AND system audio (to hear other meeting participants). This requires a virtual audio device.
-
-### Option 1: BlackHole (Recommended for Mac)
-
-BlackHole is a professional-grade virtual audio loopback driver used by audio professionals.
+made this for myself so only works for mac (blackhole)
+clone repo, npm install
 
 1. **Install BlackHole**:
    ```bash
    brew install blackhole-2ch
    ```
-   
-   Or download from: https://github.com/ExistentialAudio/BlackHole
 
 2. **Setup Multi-Output Device**:
    - Open **Audio MIDI Setup** (found in Applications > Utilities)
@@ -36,32 +29,7 @@ BlackHole is a professional-grade virtual audio loopback driver used by audio pr
    - Select your "Meeting Output" device
    - This routes system audio through both your speakers AND BlackHole
 
-4. **Start Meeting Assistant**:
-   - Click "Listen" in Free Cluely
-   - The app will automatically detect BlackHole and capture system audio
-   - You'll see "System + Mic" status when working properly
-
-### Option 2: VB-Audio Virtual Cable (Cross-platform)
-
-Works on both Mac and Windows but requires more setup:
-
-1. Download from: https://vb-audio.com/Cable/
-2. Install the Mac driver package
-3. Configure audio routing similar to BlackHole setup
-
-### Option 3: Microphone-Only Mode
-
-If you don't need system audio capture:
-- Just click "Listen" and it will use microphone only
-- Perfect for in-person meetings or when you're presenting
-
-## How It Works
-
-1. **System Audio Detection**: Automatically detects virtual audio devices
-2. **Audio Mixing**: Combines microphone and system audio with optimized levels
-3. **Real-time Processing**: Transcribes and analyzes audio every 2-3 seconds
-4. **Meeting Context**: Provides meeting-specific responses and summaries
-5. **Smart Responses**: Can answer questions directed at you or provide meeting insights
+run dev.sh file and profit
 
 ## Development
 
@@ -70,35 +38,29 @@ If you don't need system audio capture:
 npm install
 
 # Start development
-npm run dev
+./dev.sh
 ```
-
-## Meeting Assistant Features
-
-- **Automatic Meeting Detection**: Detects when you're in video calls
-- **Real-time Transcription**: Powered by Deepgram
-- **Intelligent Responses**: Context-aware meeting assistance
-- **Question Answering**: Can respond to questions directed at you
-- **Meeting Summaries**: Provides real-time meeting insights
-- **Smart Audio Processing**: Optimized for meeting scenarios
-
-## Troubleshooting
-
-### No System Audio
-- Ensure BlackHole is installed and selected as output device
-- Check that Multi-Output Device includes BlackHole
-- Verify app shows "System + Mic" status
-
-### Audio Quality Issues
-- Try different sample rates in Audio MIDI Setup
-- Ensure microphone permissions are granted
-- Check that only one app is using microphone at a time
-
-### Performance Issues
-- Close other audio applications
-- Restart CoreAudio: `sudo killall coreaudiod`
-- Check CPU usage during meetings
 
 ## License
 
-MIT License - see LICENSE file for details. 
+Licensed under the Apache License, Version 2.0 - see LICENSE file for details.
+
+## Attribution
+
+This project is based on original work by Prathit (https://github.com/Prat011) and has been modified for this personal project just on my computer
+
+**Original Work by Prathit:**
+- Core Electron application architecture
+- LLM integration foundation with Google Gemini
+- Screenshot capture and processing system
+- React UI framework and basic components
+- IPC communication infrastructure
+
+**Changes**
+- Complete audio capture and transcription system using Deepgram
+- Meeting assistant functionality with real-time audio processing
+- System audio integration for Mac using BlackHole
+- Interactive screenshot chat with conversation history
+- Enhanced AI prompting system for better responses
+- Conversational audio processing with context awareness
+- Advanced debugging and development tools

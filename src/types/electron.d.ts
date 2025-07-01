@@ -26,7 +26,7 @@ export interface ElectronAPI {
   moveWindowLeft: () => Promise<void>
   moveWindowRight: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
-  analyzeAudioConversational: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+  analyzeAudioConversational: (data: string, mimeType: string, mode?: 'meeting' | 'conversation') => Promise<{ text: string; timestamp: number }>
   analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
   analyzeImageFile: (path: string) => Promise<void>
   getDesktopSources: () => Promise<any>

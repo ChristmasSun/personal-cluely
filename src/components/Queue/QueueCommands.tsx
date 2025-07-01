@@ -1,3 +1,15 @@
+/*
+ * Originally created by Prathit (https://github.com/Prat011)
+
+ * - Added extensive audio recording capabilities with system audio support
+ * - Added real-time transcription and meeting assistant features
+ * - Enhanced UI for audio recording with better status indicators
+ * - Added conversation history and chat-like interface
+ * - Improved audio processing with multiple input sources
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
+
 import React, { useState, useEffect, useRef } from "react"
 
 interface ConversationMessage {
@@ -23,6 +35,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
   const [showFullConversation, setShowFullConversation] = useState(false)
   const [hasSystemAudio, setHasSystemAudio] = useState(false)
+  const [aiMode, setAiMode] = useState<'meeting' | 'conversation'>('meeting')
   const conversationEndRef = useRef<HTMLDivElement>(null)
   
   // Web Audio API refs
@@ -484,7 +497,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
           
           // Use appropriate MIME type
           const mimeType = recordedBlob.current ? 'audio/webm' : 'audio/wav'
-          const result = await window.electronAPI.analyzeAudioConversational(base64Data, mimeType)
+          const result = await (window.electronAPI as any).analyzeAudioConversational(base64Data, mimeType, aiMode)
           
           window.electronAPI.debugLog(`🎤 [PROCESS] AI analysis complete!`)
           
@@ -1076,7 +1089,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
     // Auto-switch back to normal audio mode
     try {
       window.electronAPI.debugLog('🎧 [STOP] Switching back to normal audio mode...')
-      const result = await window.electronAPI.switchAudioMode('normal')
+      const result = await (window.electronAPI as any).switchAudioMode('normal')
       if (result.success) {
         window.electronAPI.debugLog('✅ [STOP] Successfully switched back to normal audio mode')
       } else {
@@ -1104,6 +1117,33 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
   return (
     <div className="w-fit">
       <div className="backdrop-blur-lg bg-black/40 rounded-full px-4 py-2 flex items-center gap-3 border border-white/10 shadow-lg">
+        {/* Mode Toggle Button */}
+        <button
+          onClick={() => setAiMode(prev => prev === 'meeting' ? 'conversation' : 'meeting')}
+          className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+            aiMode === 'meeting'
+              ? 'bg-blue-500/20 text-blue-200 border border-blue-400/30'
+              : 'bg-purple-500/20 text-purple-200 border border-purple-400/30'
+          }`}
+          title={aiMode === 'meeting' ? 'Switch to Conversation Helper' : 'Switch to Meeting Assistant'}
+        >
+          {aiMode === 'meeting' ? (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 002 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2v-8a2 2 0 012-2V6" />
+              </svg>
+              Meeting
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+              </svg>
+              Chat
+            </>
+          )}
+        </button>
+
         {/* Listen Button */}
                 <button
           onClick={handleListenClick}
@@ -1118,14 +1158,14 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
           {isListening ? (
             <>
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              {hasSystemAudio ? 'Meeting Mode' : 'Listen'}
+              {aiMode === 'meeting' ? (hasSystemAudio ? 'Meeting Mode' : 'Listen') : 'Chat Helper'}
             </>
           ) : (
             <>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
-              Listen
+              {aiMode === 'meeting' ? 'Listen' : 'Chat Helper'}
             </>
           )}
         </button>
@@ -1201,8 +1241,8 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
         </div>
           </div>
 
-            {/* BlackHole Setup Guide */}
-      {isListening && !hasSystemAudio && (
+            {/* Setup Guide */}
+      {isListening && !hasSystemAudio && aiMode === 'meeting' && (
         <div className="mt-2 p-3 bg-blue-500/10 backdrop-blur-md rounded-xl text-xs text-blue-200 border border-blue-400/20">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
@@ -1214,8 +1254,21 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
           <div className="space-y-1 text-blue-200/70">
             <div>1. Install: <code className="bg-blue-500/20 px-1 rounded">brew install blackhole-2ch</code></div>
             <div>2. Set up Multi-Output Device in Audio MIDI Setup</div>
-            <div>3. Restart Free Cluely to detect BlackHole</div>
+            <div>3. Restart to detect BlackHole</div>
           </div>
+        </div>
+      )}
+
+      {/* Conversation Helper Info */}
+      {isListening && aiMode === 'conversation' && (
+        <div className="mt-2 p-3 bg-purple-500/10 backdrop-blur-md rounded-xl text-xs text-purple-200 border border-purple-400/20">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+            <strong>Conversation Helper Active</strong>
+          </div>
+          <p className="text-purple-200/80">
+            I'm here to help with social conversations! I'll suggest natural responses, conversation starters, and ways to keep dialogue flowing smoothly.
+          </p>
         </div>
       )}
 
@@ -1236,7 +1289,16 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
               <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${isAiThinking ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
-                  <span className="font-medium text-white/90">Live Conversation</span>
+                  <span className="font-medium text-white/90">
+                    {aiMode === 'meeting' ? 'Meeting Assistant' : 'Conversation Helper'}
+                  </span>
+                  <div className={`px-2 py-1 rounded-full text-xs ${
+                    aiMode === 'meeting' 
+                      ? 'bg-blue-500/20 text-blue-200 border border-blue-400/30' 
+                      : 'bg-purple-500/20 text-purple-200 border border-purple-400/30'
+                  }`}>
+                    {aiMode === 'meeting' ? 'Meeting' : 'Chat'}
+                  </div>
                       </div>
                 <button 
                   onClick={() => setShowFullConversation(false)}
@@ -1296,9 +1358,18 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                 <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${isAiThinking ? 'bg-yellow-400 animate-pulse' : 'bg-blue-400'}`}></div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <strong className={`${isAiThinking ? 'text-yellow-400' : 'text-blue-400'}`}>
-                      {isAiThinking ? 'AI Thinking...' : 'AI Response:'}
-                    </strong>
+                    <div className="flex items-center gap-2">
+                      <strong className={`${isAiThinking ? 'text-yellow-400' : (aiMode === 'meeting' ? 'text-blue-400' : 'text-purple-400')}`}>
+                        {isAiThinking ? 'AI Thinking...' : (aiMode === 'meeting' ? 'Meeting Assistant:' : 'Chat Helper:')}
+                      </strong>
+                      <div className={`px-1.5 py-0.5 rounded text-xs ${
+                        aiMode === 'meeting' 
+                          ? 'bg-blue-500/20 text-blue-200' 
+                          : 'bg-purple-500/20 text-purple-200'
+                      }`}>
+                        {aiMode === 'meeting' ? 'Meeting' : 'Chat'} 
+                      </div>
+                    </div>
                     {conversationHistory.length > 0 && (
                       <button 
                         onClick={() => setShowFullConversation(true)}

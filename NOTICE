@@ -1,0 +1,50 @@
+================================================================================
+
+This software includes the following third-party components:
+
+Electron Framework
+- Used for desktop application functionality
+- License: MIT
+- Source: https://github.com/electron/electron
+
+React
+- Used for user interface
+- License: MIT  
+- Source: https://github.com/facebook/react
+
+TypeScript
+- Used for type-safe development
+- License: Apache 2.0
+- Source: https://github.com/microsoft/TypeScript
+
+Tailwind CSS
+- Used for styling
+- License: MIT
+- Source: https://github.com/tailwindlabs/tailwindcss
+
+Deepgram SDK
+- Used for audio transcription
+- License: MIT
+- Source: https://github.com/deepgram/deepgram-node-sdk
+
+================================================================================
+
+ORIGINAL WORK ATTRIBUTION:
+
+This project is based on original work by Prathit (https://github.com/Prat011):
+- Original application architecture and core functionality
+- Electron main process implementation  
+- LLM integration and processing systems
+- Screenshot capture functionality
+- React UI foundation
+- IPC communication system
+
+MODIFICATIONS:
+
+- Audio capture and processing (DeepgramHelper.ts) 
+- System audio integration for Mac
+- Meeting assistant features and real-time transcription
+- Enhanced UI components and user experience
+- Additional processing capabilities
+- Bug fixes and performance improvements
+- Documentation and setup improvements

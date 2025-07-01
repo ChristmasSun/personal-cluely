@@ -1,4 +1,16 @@
-// ipcHandlers.ts
+/*
+ * Originally created by Prathit (https://github.com/Prat011)
+ * 
+ * - Added audio analysis IPC handlers (analyze-audio-base64, analyze-audio-conversational)
+ * - Added conversational audio processing with different modes
+ * - Added screenshot chat functionality (ask-question-about-screenshot)
+ * - Added conversation history management handlers
+ * - Added desktop source capture for system audio recording
+ * - Added clear conversation handlers for different modes
+ * - Enhanced debugging capabilities with debug-log handler
+ * 
+ * Licensed under the Apache License, Version 2.0
+ */
 
 import { ipcMain, app, desktopCapturer } from "electron"
 import { AppState } from "./main"
@@ -98,9 +110,9 @@ export function initializeIpcHandlers(appState: AppState): void {
   })
 
   // IPC handler for conversational audio processing
-  ipcMain.handle("analyze-audio-conversational", async (event, data: string, mimeType: string) => {
+  ipcMain.handle("analyze-audio-conversational", async (event, data: string, mimeType: string, mode: 'meeting' | 'conversation' = 'meeting') => {
     try {
-      const result = await appState.processingHelper.processConversationalAudio(data, mimeType)
+      const result = await appState.processingHelper.processConversationalAudio(data, mimeType, mode)
       return result
     } catch (error: any) {
       console.error("Error in analyze-audio-conversational handler:", error)
